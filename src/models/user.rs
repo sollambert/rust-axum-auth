@@ -20,7 +20,7 @@ pub struct LoginUser {
     pub password: String
 }
 
-#[derive(Clone, Serialize, sqlx::FromRow)]
+#[derive(Clone, Debug, Serialize, sqlx::FromRow)]
 pub struct ResponseUser {
     pub uuid: String,
     pub username: String,

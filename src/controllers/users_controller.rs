@@ -33,7 +33,20 @@ async fn create_user(
                     "SELECT * FROM \"users\" WHERE id = $1")
                 .bind(id)
                 .fetch_all(&pool::get_pool()).await.unwrap();
-            return (StatusCode::CREATED, Json(results[0].to_owned()))
+            println!("{:?}", results);
+            return (StatusCode::CREATED,
+                if results.len() > 0 {
+                    Json(results[0].to_owned())
+                } else {
+                    return (StatusCode::INTERNAL_SERVER_ERROR, Json(
+                        ResponseUser {
+                            uuid: String::new(),
+                            username: String::new(),
+                            email: String::new()
+                        }
+                    ))
+                }
+            )
         },
         Err(e) => {
             // print error to console and send 400 BAD REQUEST with empty ResponseUser
