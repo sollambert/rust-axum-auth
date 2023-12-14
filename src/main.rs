@@ -2,7 +2,6 @@ use axum::Router;
 mod controllers;
 mod models;
 mod pool;
-mod crypto;
 
 #[tokio::main]
 async fn main() {
