@@ -4,7 +4,7 @@ use axum::{
     Json,Router
 };
 use std::env;
-use bcrypt::{DEFAULT_COST, hash_with_salt};
+use bcrypt::{DEFAULT_COST, hash_with_salt, verify};
 use uuid::Uuid;
 
 use crate::{models::user::{self, CreateUser, ResponseUser, User}, pool};
@@ -72,6 +72,20 @@ async fn get_db_user_by_id(id: i64) -> Result<User, sqlx::Error> {
     }
 }
 
+async fn get_db_user_by_username(username: String) -> Result<User, sqlx::Error> {
+    // query for getting all data from users table where user row matches given user ID
+    let rows = sqlx::query_as::<_, User>(
+        "SELECT * FROM \"users\" WHERE username = $1")
+    .bind(username)
+    .fetch_all(&pool::get_pool()).await.unwrap();
+    // if row[0] exists return the User otherwise return RowNotFound error
+    if rows.len() > 0 {
+        Ok(rows[0].to_owned())
+    } else {
+        Err(sqlx::Error::RowNotFound)
+    }
+}
+
 async fn insert_db_user(create_user: CreateUser) -> Result<i64, sqlx::Error> {
     // generate new user id
     let id = Uuid::new_v4();
@@ -101,12 +115,35 @@ async fn insert_db_user(create_user: CreateUser) -> Result<i64, sqlx::Error> {
 async fn login_user(
     Json(payload): Json<user::LoginUser>,
 ) -> (StatusCode, Json<user::ResponseUser>) {
-    let id = Uuid::new_v4();
-    let user = user::ResponseUser {
-        uuid: id.to_string(),
-        email: "no email".to_string(),
-        username: payload.username
+    // create empty response user to be used if not verified
+    let response_user = ResponseUser {
+        uuid: String::new(),
+        username: String::new(),
+        email: String::new()
     };
-    // send 200 response with JSON response
-    (StatusCode::OK, Json(user))
+    // get user by username from database
+    let result = get_db_user_by_username(payload.username).await;
+    // if can't get user by username, return 400
+    if let Err(e) = result {
+        println!("{:?}", e);
+        return (StatusCode::BAD_REQUEST, Json(response_user));
+    }
+    // print user data
+    println!("{:?}", result);
+    // unwrap result from DB as user object
+    let user = result.unwrap();
+    // verify supplied password is validated
+    if verify(payload.pass, &user.pass).unwrap() {
+        let response_user = ResponseUser {
+            uuid: user.uuid,
+            username: user.username,
+            email: user.email
+        };
+        //todo!("IMPLEMENT AUTH COOKIE");
+        // send 201 response with JSON response
+        (StatusCode::CREATED, Json(response_user))
+    } else {
+        // send 400 response with JSON response
+        (StatusCode::BAD_REQUEST, Json(response_user))
+    }
 }
