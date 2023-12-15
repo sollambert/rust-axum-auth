@@ -30,7 +30,7 @@ async fn create_user(
     // insert user into table
     // if successful return a valid ResponseUser and 201 CREATED
     // if unsuccessful return an empty ResponseUser object and a 400 BAD REQUEST
-    match insert_user(payload).await {
+    match insert_db_user(payload).await {
         Ok(id) => {
             // query to select user by given ID return by insert_user function
             // then return populated ResponseUser with data from table
@@ -72,7 +72,7 @@ async fn get_db_user_by_id(id: i64) -> Result<User, sqlx::Error> {
     }
 }
 
-async fn insert_user(create_user: CreateUser) -> Result<i64, sqlx::Error> {
+async fn insert_db_user(create_user: CreateUser) -> Result<i64, sqlx::Error> {
     // generate new user id
     let id = Uuid::new_v4();
     // initialize salt str slice
