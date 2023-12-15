@@ -1,4 +1,5 @@
 use axum::Router;
+use tower_cookies::CookieManagerLayer;
 mod controllers;
 mod models;
 mod pool;
@@ -23,6 +24,8 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
+        // add cookie manager middleware
+        .layer(CookieManagerLayer::new())
         // nest routers from controllers
         .nest("/users", controllers::users_controller::user_routes());
 
