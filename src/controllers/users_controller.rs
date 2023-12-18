@@ -1,13 +1,15 @@
 use axum::{
+    extract::FromRequestParts,
+    http::{request::Parts, StatusCode},
+    response::{IntoResponse, Response},
     routing::{get, post},
-    http::StatusCode,
     Json,Router
 };
 use std::env;
 use bcrypt::{DEFAULT_COST, hash_with_salt, verify};
 use uuid::Uuid;
 
-use crate::{models::user::{self, CreateUser, ResponseUser, User}, pool};
+use crate::{models::user::{self, CreateUser, ResponseUser, User, LoginUser}, pool, strategies::authentication};
 
 // route function to nest endpoints in router
 pub fn user_routes() -> Router {
@@ -113,8 +115,8 @@ async fn insert_db_user(create_user: CreateUser) -> Result<i64, sqlx::Error> {
 }
 
 async fn login_user(
-    Json(payload): Json<user::LoginUser>,
-) -> (StatusCode, Json<user::ResponseUser>) {
+    Json(payload): Json<LoginUser>,
+) -> (StatusCode, Json<ResponseUser>) {
     // create empty response user to be used if not verified
     let response_user = ResponseUser {
         uuid: String::new(),

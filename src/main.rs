@@ -4,6 +4,7 @@ use axum::Router;
 mod controllers;
 mod models;
 mod pool;
+mod strategies;
 
 #[tokio::main]
 async fn main() {
