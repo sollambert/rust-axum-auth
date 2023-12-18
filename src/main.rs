@@ -1,5 +1,6 @@
+use std::env;
+
 use axum::Router;
-use tower_cookies::CookieManagerLayer;
 mod controllers;
 mod models;
 mod pool;
@@ -12,12 +13,14 @@ async fn main() {
     // load environment variables with dotenv
     let dotenv_path = dotenv::dotenv().expect("failed to find .env file");
     println!("cargo:rerun-if-changed={}", dotenv_path.display());
+    let env_path = env::current_dir().and_then(|a| Ok(a.join("/.env"))).unwrap();
+    let _ = dotenv::from_path(env_path);
 
     // Warning: `dotenv_iter()` is deprecated! Roll your own or use a maintained fork such as `dotenvy`.
-    for env_var in dotenv::dotenv_iter().unwrap() {
-        let (key, value) = env_var.unwrap();
-        println!("cargo:rustc-env={key}={value}");
-    }
+    // for env_var in dotenv::dotenv_iter().unwrap() {
+    //     let (key, value) = env_var.unwrap();
+    //     println!("cargo:rustc-env={key}={value}");
+    // }
 
     // create DB Pool
     let _  = pool::create_pool().await;
@@ -25,7 +28,7 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         // add cookie manager middleware
-        .layer(CookieManagerLayer::new())
+        // .layer(CookieManagerLayer::new())
         // nest routers from controllers
         .nest("/users", controllers::users_controller::user_routes());
 
