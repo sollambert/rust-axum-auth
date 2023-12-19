@@ -31,7 +31,8 @@ async fn main() {
         // add cookie manager middleware
         // .layer(CookieManagerLayer::new())
         // nest routers from controllers
-        .nest("/users", controllers::users_controller::user_routes());
+        .nest("/users", controllers::auth_controller::routes())
+        .nest("/users", controllers::users_controller::routes());
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
