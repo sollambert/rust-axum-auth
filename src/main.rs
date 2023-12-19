@@ -31,7 +31,7 @@ async fn main() {
         // add cookie manager middleware
         // .layer(CookieManagerLayer::new())
         // nest routers from controllers
-        .nest("/users", controllers::auth_controller::routes())
+        .nest("/auth", controllers::auth_controller::routes())
         .nest("/users", controllers::users_controller::routes());
 
     // run our app with hyper, listening globally on port 3000
