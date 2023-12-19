@@ -51,7 +51,7 @@ where
         let token_data = decode::<Claims>(bearer.token(), &KEYS.decoding, &Validation::default())
             .map_err(|_| AuthError::InvalidToken)?;
         // Check if token is expired
-        if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() > u128::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 0-9).unwrap() {
+        if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() - token_data.claims.iat > u128::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 0-9).unwrap() {
             return Err(AuthError::TokenExpired)
         }
         Ok(token_data.claims)
