@@ -1,14 +1,11 @@
 use axum::{
-    extract::FromRequestParts,
-    http::{request::Parts, StatusCode},
-    response::{IntoResponse, Response},
-    routing::{get, post},
+    http::StatusCode,
+    routing::post,
     Json,Router
 };
-use std::env;
 use bcrypt::verify;
 
-use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, AuthBody, AuthTokenResponse, generate_token_response}}};
+use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, AuthTokenResponse, generate_token_response}}};
 
 // route function to nest endpoints in router
 pub fn routes() -> Router {
@@ -19,7 +16,7 @@ pub fn routes() -> Router {
 
 async fn login_user(
     Json(payload): Json<LoginUser>,
-) -> Result<Json<AuthTokenResponse>, AuthError> {
+) -> Result<(StatusCode, Json<AuthTokenResponse>), AuthError> {
     // check if supplied credentials are not empty
     if payload.username.is_empty() || payload.pass.is_empty() {
         return Err(AuthError::MissingCredentials)
@@ -48,7 +45,7 @@ async fn login_user(
         let auth_token_response = generate_token_response(response_user);
         //todo!("IMPLEMENT AUTH COOKIE");
         // send 201 response with JSON response
-        Ok(Json(auth_token_response))
+        Ok((StatusCode::CREATED, Json(auth_token_response)))
     } else {
         // send 400 response with JSON response
         Err(AuthError::WrongCredentials)
