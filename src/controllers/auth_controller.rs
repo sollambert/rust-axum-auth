@@ -43,8 +43,7 @@ async fn login_user(
         };
         // generate jwt token
         let auth_token_response = generate_token_response(response_user);
-        //todo!("IMPLEMENT AUTH COOKIE");
-        // send 201 response with JSON response
+        // send 201 response with JWT token response
         Ok((StatusCode::CREATED, Json(auth_token_response)))
     } else {
         // send 400 response with JSON response
