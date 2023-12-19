@@ -48,11 +48,7 @@ where
             .map_err(|_| AuthError::InvalidToken)?;
         // Decode the user data
         let token_data = decode::<Claims>(bearer.token(), &KEYS.decoding, &Validation::default())
-            .map_err(|_| AuthError::InvalidToken)?;
-        // Check if token is expired
-        if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() - token_data.claims.iat > u128::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 0-9).unwrap() {
-            return Err(AuthError::TokenExpired)
-        }
+        .map_err(|_| AuthError::InvalidToken)?;
         Ok(token_data.claims)
     }
 }
@@ -63,7 +59,6 @@ impl IntoResponse for AuthError {
             AuthError::WrongCredentials => (StatusCode::UNAUTHORIZED, "Wrong credentials"),
             AuthError::MissingCredentials => (StatusCode::BAD_REQUEST, "Missing credentials"),
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
-            AuthError::TokenExpired => (StatusCode::BAD_REQUEST, "Token expired"),
             AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
         };
         let body = Json(json!({
@@ -80,7 +75,7 @@ pub fn generate_new_token() -> AuthBody {
         // issuer company
         com: env::var("JWT_COMPANY").unwrap(),
         // issued at timestamp
-        iat: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+        exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap()
     };
     AuthBody::new(encode(&Header::default(), &claims, &KEYS.encoding)
         .map_err(|_| AuthError::TokenCreation).unwrap())
@@ -90,7 +85,7 @@ pub fn generate_new_token() -> AuthBody {
 pub struct Claims {
     sub: String,
     com: String,
-    iat: u128
+    exp: u64
 }
 
 #[derive(Debug, Serialize)]
@@ -113,6 +108,5 @@ pub enum AuthError {
     WrongCredentials,
     MissingCredentials,
     TokenCreation,
-    TokenExpired,
     InvalidToken
 }
