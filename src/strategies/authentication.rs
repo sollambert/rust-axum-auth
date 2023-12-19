@@ -8,7 +8,7 @@ use axum::{
     }, extract::FromRequestParts, async_trait, body::Body
 };
 use axum_extra::{headers::{Authorization, authorization::Bearer}, TypedHeader};
-use jsonwebtoken::{EncodingKey, DecodingKey, Validation, decode, TokenData, encode, Header};
+use jsonwebtoken::{EncodingKey, DecodingKey, Validation, decode, encode, Header};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -77,8 +77,8 @@ impl IntoResponse for AuthError {
 pub fn generate_token_response(response_user: ResponseUser) -> AuthTokenResponse {
     let claims = Claims {
         sub: env::var("JWT_SUB").unwrap(),
-        company: env::var("JWT_COMPANY").unwrap(),
-        created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+        com: env::var("JWT_COMPANY").unwrap(),
+        iat: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
     };
     return AuthTokenResponse {
         auth_body: AuthBody::new(encode(&Header::default(), &claims, &KEYS.encoding)
@@ -96,8 +96,8 @@ pub struct AuthTokenResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     sub: String,
-    company: String,
-    created_at: u128
+    com: String,
+    iat: u128
 }
 
 #[derive(Debug, Serialize)]
