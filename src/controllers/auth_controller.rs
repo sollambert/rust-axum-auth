@@ -4,8 +4,9 @@ use axum::{
     Json,Router
 };
 use bcrypt::verify;
+use serde::Serialize;
 
-use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, AuthTokenResponse, generate_token_response}}};
+use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, generate_new_token, AuthBody}}};
 
 // route function to nest endpoints in router
 pub fn routes() -> Router {
@@ -14,9 +15,15 @@ pub fn routes() -> Router {
         .route("/login", post(login_user))
 }
 
+#[derive(Serialize)]
+struct LoginResponse {
+    auth_body: AuthBody,
+    response_user: ResponseUser
+}
+
 async fn login_user(
     Json(payload): Json<LoginUser>,
-) -> Result<(StatusCode, Json<AuthTokenResponse>), AuthError> {
+) -> Result<(StatusCode, Json<LoginResponse>), AuthError> {
     // check if supplied credentials are not empty
     if payload.username.is_empty() || payload.pass.is_empty() {
         return Err(AuthError::MissingCredentials)
@@ -41,10 +48,11 @@ async fn login_user(
             username: user.username,
             email: user.email
         };
-        // generate jwt token
-        let auth_token_response = generate_token_response(response_user);
         // send 201 response with JWT token response
-        Ok((StatusCode::CREATED, Json(auth_token_response)))
+        Ok((StatusCode::CREATED, Json(LoginResponse {
+            auth_body: generate_new_token(),
+            response_user
+        })))
     } else {
         // send 400 response with JSON response
         Err(AuthError::WrongCredentials)

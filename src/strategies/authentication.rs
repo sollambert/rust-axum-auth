@@ -13,8 +13,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::models::user::ResponseUser;
-
+// Keys for encoding/decoding authorization tokens with JWT_SECRET
 static KEYS: Lazy<Keys> = Lazy::new(|| {
     let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be configured.");
     Keys::new(secret.as_bytes())
@@ -74,23 +73,17 @@ impl IntoResponse for AuthError {
     }
 }
 
-pub fn generate_token_response(response_user: ResponseUser) -> AuthTokenResponse {
+pub fn generate_new_token() -> AuthBody {
     let claims = Claims {
+        // issuer domain
         sub: env::var("JWT_SUB").unwrap(),
+        // issuer company
         com: env::var("JWT_COMPANY").unwrap(),
+        // issued at timestamp
         iat: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
     };
-    return AuthTokenResponse {
-        auth_body: AuthBody::new(encode(&Header::default(), &claims, &KEYS.encoding)
-        .map_err(|_| AuthError::TokenCreation).unwrap()),
-        response_user
-    }
-}
-
-#[derive(Debug, Serialize)]
-pub struct AuthTokenResponse {
-    auth_body: AuthBody,
-    response_user: ResponseUser
+    AuthBody::new(encode(&Header::default(), &claims, &KEYS.encoding)
+        .map_err(|_| AuthError::TokenCreation).unwrap())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
