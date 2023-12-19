@@ -6,19 +6,28 @@ use axum::{
 use bcrypt::verify;
 use serde::Serialize;
 
-use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, generate_new_token, AuthBody}}};
+use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, generate_new_token, AuthBody, Claims}}};
 
 // route function to nest endpoints in router
 pub fn routes() -> Router {
     // create routes
     Router::new()
         .route("/login", post(login_user))
+        .route("/protected", post(protected))
 }
 
 #[derive(Serialize)]
 struct LoginResponse {
     auth_body: AuthBody,
     response_user: ResponseUser
+}
+
+async fn protected(claims: Claims) -> Result<String, AuthError> {
+    println!("{:?}", claims);
+    // Send the protected data to the user
+    Ok(format!(
+        "Welcome to the protected area :)",
+    ))
 }
 
 async fn login_user(
