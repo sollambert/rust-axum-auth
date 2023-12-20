@@ -71,6 +71,13 @@ impl IntoResponse for AuthError {
     }
 }
 
+pub fn validate_claims(claims: Claims) -> Result<(), AuthError> {
+    if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - claims.iat > u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap() {
+        return Err(AuthError::InvalidToken)
+    }
+    Ok(())
+}
+
 /**
  * Generate a new token and return it as AuthBody object
  */
@@ -80,6 +87,7 @@ pub fn generate_new_token() -> AuthBody {
         sub: env::var("JWT_SUB").unwrap(),
         // issuer company
         com: env::var("JWT_COMPANY").unwrap(),
+        iat: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
         // expiration timestamp from unix epoch
         exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap()
     };
@@ -91,6 +99,7 @@ pub fn generate_new_token() -> AuthBody {
 pub struct Claims {
     sub: String,
     com: String,
+    iat: u64,
     exp: u64
 }
 

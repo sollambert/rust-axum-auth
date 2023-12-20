@@ -6,14 +6,14 @@ use axum::{
 use bcrypt::verify;
 use serde::Serialize;
 
-use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, generate_new_token, AuthBody}}, middleware::authenticated};
+use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, generate_new_token, AuthBody}}, middleware::token_athentication};
 
 // route function to nest endpoints in router
 pub fn routes() -> Router {
     // create routes
     Router::new()
         .route("/protected", post(protected))
-        .layer(middleware::from_fn(authenticated::authenticated))
+        .layer(middleware::from_fn(token_athentication::authenticate_token))
         .route("/login", post(login_user))
 }
 
@@ -44,13 +44,10 @@ async fn login_user(
     // get user by username from database
     let result = users::get_db_user_by_username(payload.username).await;
     // if can't get user by username, return 400
-    if let Err(e) = result {
-        println!("{:?}", e);
+    if let Err(_) = result {
         // return (StatusCode::BAD_REQUEST, Json(response_user));
         return Err(AuthError::WrongCredentials)
     }
-    // print user data
-    println!("{:?}", result);
     // unwrap result from DB as user object
     let user = result.unwrap();
     // verify supplied password is validated
