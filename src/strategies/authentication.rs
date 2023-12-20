@@ -33,6 +33,9 @@ impl Keys {
     }
 }
 
+/**
+ * Implement FromRequestParts trait for Claims struct to allow extracting from request body
+ */
 #[async_trait]
 impl<S> FromRequestParts<S> for Claims
 where
@@ -68,13 +71,16 @@ impl IntoResponse for AuthError {
     }
 }
 
+/**
+ * Generate a new token and return it as AuthBody object
+ */
 pub fn generate_new_token() -> AuthBody {
     let claims = Claims {
         // issuer domain
         sub: env::var("JWT_SUB").unwrap(),
         // issuer company
         com: env::var("JWT_COMPANY").unwrap(),
-        // issued at timestamp
+        // expiration timestamp from unix epoch
         exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap()
     };
     AuthBody::new(encode(&Header::default(), &claims, &KEYS.encoding)

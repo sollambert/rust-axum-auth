@@ -16,20 +16,23 @@ pub fn routes() -> Router {
         .route("/protected", post(protected))
 }
 
+// response struct for login route
 #[derive(Serialize)]
 struct LoginResponse {
-    auth_body: AuthBody,
-    response_user: ResponseUser
+    auth: AuthBody,
+    user: ResponseUser
 }
 
-async fn protected(claims: Claims) -> Result<String, AuthError> {
-    println!("{:?}", claims);
+// example route for authentication protection, will be replaced with middleware
+// right now, authentication is only required for routes that extract the Claims object from a requests decoded Bearer token
+async fn protected(_claims: Claims) -> Result<String, AuthError> {
     // Send the protected data to the user
     Ok(format!(
         "Welcome to the protected area :)",
     ))
 }
 
+// route for logging in user with provided LoginUser json
 async fn login_user(
     Json(payload): Json<LoginUser>,
 ) -> Result<(StatusCode, Json<LoginResponse>), AuthError> {
@@ -59,8 +62,8 @@ async fn login_user(
         };
         // send 201 response with JWT token response
         Ok((StatusCode::CREATED, Json(LoginResponse {
-            auth_body: generate_new_token(),
-            response_user
+            auth: generate_new_token(),
+            user: response_user
         })))
     } else {
         // send 400 response with JSON response
