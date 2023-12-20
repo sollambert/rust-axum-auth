@@ -1,19 +1,20 @@
 use axum::{
     http::StatusCode,
     routing::post,
-    Json,Router
+    Json,Router, middleware
 };
 use bcrypt::verify;
 use serde::Serialize;
 
-use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, generate_new_token, AuthBody, Claims}}};
+use crate::{models::user::{ResponseUser, LoginUser}, strategies::{users, authentication::{AuthError, generate_new_token, AuthBody}}, middleware::authenticated};
 
 // route function to nest endpoints in router
 pub fn routes() -> Router {
     // create routes
     Router::new()
-        .route("/login", post(login_user))
         .route("/protected", post(protected))
+        .layer(middleware::from_fn(authenticated::authenticated))
+        .route("/login", post(login_user))
 }
 
 // response struct for login route
@@ -25,7 +26,7 @@ struct LoginResponse {
 
 // example route for authentication protection, will be replaced with middleware
 // right now, authentication is only required for routes that extract the Claims object from a requests decoded Bearer token
-async fn protected(_claims: Claims) -> Result<String, AuthError> {
+async fn protected() -> Result<String, AuthError> {
     // Send the protected data to the user
     Ok(format!(
         "Welcome to the protected area :)",

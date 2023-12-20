@@ -5,6 +5,7 @@ mod controllers;
 mod models;
 mod pool;
 mod strategies;
+mod middleware;
 
 #[tokio::main]
 async fn main() {
