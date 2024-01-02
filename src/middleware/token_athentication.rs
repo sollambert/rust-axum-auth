@@ -4,7 +4,7 @@ use axum::{
     extract::Request
 };
 
-use crate::strategies::authentication::{Claims, validate_claims};
+use crate::strategies::authentication::Claims;
 
 // middleware function for authenticating a token outside of supplied jsonwebtoken crate functionality
 pub async fn authenticate_token(
@@ -13,7 +13,7 @@ pub async fn authenticate_token(
     next: Next,
 ) -> Response {
     // validate claims
-    if let Err(e) = validate_claims(claims) {
+    if let Err(e) = claims.validate() {
         return e.into_response()
     }
     // proceed to next layer

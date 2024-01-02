@@ -71,16 +71,6 @@ impl IntoResponse for AuthError {
     }
 }
 
-pub fn validate_claims(claims: Claims) -> Result<(), AuthError> {
-    // let life = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - claims.iat;
-    // print!("{}", life);
-    // if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - claims.iat > u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap() {
-        
-    //     return Err(AuthError::InvalidToken)
-    // }
-    Ok(())
-}
-
 /**
  * Generate a new token and return it as AuthBody object
  */
@@ -104,6 +94,18 @@ pub struct Claims {
     com: String,
     // iat: u64,
     exp: u64
+}
+
+impl Claims {
+    pub fn validate(&self) -> Result<(), AuthError> {
+        // let life = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - claims.iat;
+        // print!("{}", life);
+        // if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - claims.iat > u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap() {
+            
+        //     return Err(AuthError::InvalidToken)
+        // }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize)]
