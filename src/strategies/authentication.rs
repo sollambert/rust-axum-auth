@@ -19,6 +19,10 @@ static KEYS: Lazy<Keys> = Lazy::new(|| {
     Keys::new(secret.as_bytes())
 });
 
+static TOKEN_LIFETIME: Lazy<u64> = Lazy::new(|| {
+    u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap()
+});
+
 struct Keys {
     encoding: EncodingKey,
     decoding: DecodingKey
@@ -82,7 +86,7 @@ pub fn generate_new_token() -> AuthBody {
         com: env::var("JWT_COMPANY").unwrap(),
         iat: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
         // expiration timestamp from unix epoch
-        exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap()
+        exp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() + *TOKEN_LIFETIME
     };
     AuthBody::new(encode(&Header::default(), &claims, &KEYS.encoding)
         .map_err(|_| AuthError::TokenCreation).unwrap())
@@ -99,8 +103,8 @@ pub struct Claims {
 impl Claims {
     pub fn validate(&self) -> Result<(), AuthError> {
         // iat validation
-        let life = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - self.iat;
-        if life > u64::from_str_radix(env::var("JWT_EXPIRE").unwrap().as_str(), 10).unwrap() {
+        let lifetime = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - self.iat;
+        if lifetime > *TOKEN_LIFETIME {
             return Err(AuthError::InvalidToken)
         }
         Ok(())
