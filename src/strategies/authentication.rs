@@ -66,6 +66,7 @@ impl IntoResponse for AuthError {
             AuthError::WrongCredentials => (StatusCode::UNAUTHORIZED, "Wrong credentials"),
             AuthError::MissingCredentials => (StatusCode::BAD_REQUEST, "Missing credentials"),
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
+            AuthError::TokenExpired => (StatusCode::BAD_REQUEST, "Token is expired"),
             AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
         };
         let body = Json(json!({
@@ -105,7 +106,7 @@ impl Claims {
         // iat validation
         let lifetime = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - self.iat;
         if lifetime > *TOKEN_LIFETIME {
-            return Err(AuthError::InvalidToken)
+            return Err(AuthError::TokenExpired)
         }
         Ok(())
     }
@@ -131,5 +132,6 @@ pub enum AuthError {
     WrongCredentials,
     MissingCredentials,
     TokenCreation,
+    TokenExpired,
     InvalidToken
 }
